@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from conferences.models import Conference
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
-
+from django.utils import timezone
 # Create your models here.
 def email_validator(value):
     if not value.endswith('@esprit.tn'):
@@ -37,6 +37,15 @@ class Reservation(models.Model):
     participant=models.ForeignKey(Participant,on_delete=models.CASCADE)
     confirmed=models.BooleanField(default=False)
     reservation_date=models.DateTimeField(auto_now_add=True)
+    def clean(self):
+        if self.conference.start_date < timezone.now().date():
+            raise ValidationError('you can only reserve for upcoming dates')
+        reservation_count=Reservation.objects.filter(
+            participant=self.participant,
+            reservation_date=self.reservation_date
+        )
+        if reservation_count>=3:
+            raise ValidationError("you can only make up to 3 reservations per day")
     class Meta :
         unique_together=('conference','participant')
         verbose_name_plural='Reservations'

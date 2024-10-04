@@ -3,6 +3,8 @@ from categories.models import Category
 from django.core.validators import MaxValueValidator
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+
 # Create your models here.
 
 class Conference(models.Model):
@@ -19,13 +21,17 @@ class Conference(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
     category=models.ForeignKey(Category,on_delete=models.CASCADE)
+    def clean(self):
+        if (self.end_date) <= (self.start_date):
+            raise ValidationError('End date must be after start date')
     class Meta:
         constraints=[
             models.CheckConstraint(
                 check=models.Q(
-                    start_date__gte=timezone.now().date(),
-                    name="the start date must be grater or equal than today"
-                )
+                    start_date__gte=timezone.now().date()
+                   
+                ),
+                 name="the start date must be grater or equal than today"
             )
         ]
 
