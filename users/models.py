@@ -12,7 +12,7 @@ def email_validator(value):
 
 class Participant(AbstractUser):
     cin_validator=RegexValidator(
-        regex=r'^d{8}$',
+        regex=r'^\d{8}$',
         message="This field must contain exactly 8 digits"
     )
     cin=models.CharField(primary_key=True,max_length=8,validators=[cin_validator])
@@ -28,7 +28,7 @@ class Participant(AbstractUser):
         ('enseignant','enseignant')
     )
     participant_category=models.CharField(max_length=255, choices=CHOICES)
-    reservations=models.ManyToManyField(Conference,through='Reservation',related_name='Reservation')
+    reservations=models.ManyToManyField(Conference,through='Reservation',related_name='reservations')
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
 
@@ -38,12 +38,13 @@ class Reservation(models.Model):
     confirmed=models.BooleanField(default=False)
     reservation_date=models.DateTimeField(auto_now_add=True)
     def clean(self):
-        if self.conference.start_date < timezone.now().date():
+        today = timezone.now().date()
+        if self.conference.start_date < today:
             raise ValidationError('you can only reserve for upcoming dates')
         reservation_count=Reservation.objects.filter(
             participant=self.participant,
-            reservation_date=self.reservation_date
-        )
+            reservation_date__date=today
+        ).count()
         if reservation_count>=3:
             raise ValidationError("you can only make up to 3 reservations per day")
     class Meta :

@@ -34,5 +34,7 @@ class Conference(models.Model):
                  name="the start date must be grater or equal than today"
             )
         ]
+    def __str__(self):
+        return f"title conference = {self.title}"
 
     
